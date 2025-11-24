@@ -1,135 +1,231 @@
+// Loading an .fbx mesh in DirectX 9
+// Example released by Bobby Thurman
+// Most of this code is stolen from various places.
+// Thanks to Doug Rogers and Ken Wright
 
-#include <fbxsdk.h>
+#define STRICT
+#define WIN32_LEAN_AND_MEAN
+#define D3D_DEBUG_INFO
 
-/* Tab character ("\t") counter */
-int numTabs = 0;
+#include <windows.h>
+#include <assert.h>
+#include <d3d9.h>
+#include <d3dx9.h>
+#include <stdio.h> // sprintf(..)
 
-/**
- * Print the required number of tabs.
- */
-void PrintTabs() {
-    for (int i = 0; i < numTabs; i++)
-        printf("\t");
+#pragma comment(lib, "d3dx9.lib")
+#pragma comment(lib, "d3d9.lib")
+
+#include "SingleFbxMesh.h"
+#include "fbxSdk.h"
+
+HWND                    g_hWnd          = NULL;
+LPDIRECT3D9             g_pD3D          = NULL;
+LPDIRECT3DDEVICE9       g_pd3dDevice    = NULL;
+LPDIRECT3DVERTEXBUFFER9 g_pVertexBuffer = NULL;
+SingleFbxMesh        g_SingleFbxMesh;
+static bool				g_Wire				= false;
+static float			g_fSpinX			= -25.0f;
+static float			g_fSpinY			= 0.0f;
+static float         g_scale = 0.018f;
+
+void init(void);         // - called at the start of our program
+void render(void);       // - our mainloop..called over and over again
+void shutDown(void);     // - last function we call before we end!
+
+LRESULT WINAPI MsgProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
+{
+   static POINT ptLastMousePosit;
+   static POINT ptCurrentMousePosit;
+   static bool bMousing;
+
+   switch (uMsg)
+   {
+      case WM_KEYDOWN:
+      {
+         switch (wParam)
+         {
+         case VK_ESCAPE:
+            shutDown();
+            PostQuitMessage(0);
+            break;
+
+         case 'W':
+            g_Wire = !g_Wire;
+            break;
+         }
+
+         break;
+      }
+
+      case WM_LBUTTONDOWN:
+      {
+         ptLastMousePosit.x = ptCurrentMousePosit.x = LOWORD(lParam);
+         ptLastMousePosit.y = ptCurrentMousePosit.y = HIWORD(lParam);
+         bMousing = true;
+
+         break;
+      }
+
+      case WM_LBUTTONUP:
+      {
+         bMousing = false;
+
+         break;
+      }
+
+      case WM_MOUSEMOVE:
+      {
+         ptCurrentMousePosit.x = LOWORD(lParam);
+         ptCurrentMousePosit.y = HIWORD(lParam);
+
+         if (bMousing)
+         {
+            g_fSpinX -= (ptCurrentMousePosit.x - ptLastMousePosit.x);
+            g_fSpinY -= (ptCurrentMousePosit.y - ptLastMousePosit.y);
+         }
+
+         ptLastMousePosit.x = ptCurrentMousePosit.x;
+         ptLastMousePosit.y = ptCurrentMousePosit.y;
+
+         break;
+      }
+      case WM_MOUSEWHEEL:
+      {
+         short wheelMovement = -((short)HIWORD(wParam)) / WHEEL_DELTA;
+
+         if (wheelMovement > 0)
+         {
+            g_scale = max(g_scale * 0.5f, 0.001f);
+         }
+         else
+         {
+            g_scale = min(g_scale * 1.5f, 10.0f);
+         }
+
+         break;
+      }
+   }
+
+   if(uMsg == WM_DESTROY)
+   {
+      shutDown();
+      PostQuitMessage(0);
+      return 0;
+   }
+
+   return (long)DefWindowProc(hWnd, uMsg, wParam, lParam);
 }
 
-/**
- * Return a string-based representation based on the attribute type.
- */
-FbxString GetAttributeTypeName(FbxNodeAttribute::EType type) {
-    switch (type) {
-    case FbxNodeAttribute::eUnknown: return "unidentified";
-    case FbxNodeAttribute::eNull: return "null";
-    case FbxNodeAttribute::eMarker: return "marker";
-    case FbxNodeAttribute::eSkeleton: return "skeleton";
-    case FbxNodeAttribute::eMesh: return "mesh";
-    case FbxNodeAttribute::eNurbs: return "nurbs";
-    case FbxNodeAttribute::ePatch: return "patch";
-    case FbxNodeAttribute::eCamera: return "camera";
-    case FbxNodeAttribute::eCameraStereo: return "stereo";
-    case FbxNodeAttribute::eCameraSwitcher: return "camera switcher";
-    case FbxNodeAttribute::eLight: return "light";
-    case FbxNodeAttribute::eOpticalReference: return "optical reference";
-    case FbxNodeAttribute::eOpticalMarker: return "marker";
-    case FbxNodeAttribute::eNurbsCurve: return "nurbs curve";
-    case FbxNodeAttribute::eTrimNurbsSurface: return "trim nurbs surface";
-    case FbxNodeAttribute::eBoundary: return "boundary";
-    case FbxNodeAttribute::eNurbsSurface: return "nurbs surface";
-    case FbxNodeAttribute::eShape: return "shape";
-    case FbxNodeAttribute::eLODGroup: return "lodgroup";
-    case FbxNodeAttribute::eSubDiv: return "subdiv";
-    default: return "unknown";
-    }
+int _stdcall WinMain(HINSTANCE i, HINSTANCE, char* k, int) 
+{
+    MSG msg;
+    WCHAR szname[] = L"DirectX3D";
+    WNDCLASSEX wc = { sizeof(WNDCLASSEX), CS_CLASSDC, MsgProc, 0L, 0L, 
+                      GetModuleHandle(NULL), NULL, NULL, NULL, NULL,
+                      szname, NULL };
+    RegisterClassEx( &wc );
+    g_hWnd = CreateWindowEx(WS_EX_APPWINDOW,
+                              szname, L"Display FBX in DX9", 
+                              WS_OVERLAPPEDWINDOW,//for fullscreen make into WS_POPUP
+                              50, 50, 640,480,    //for full screen GetSystemMetrics(SM_CXSCREEN), GetSystemMetrics(SM_CYSCREEN),
+                              GetDesktopWindow(), NULL, wc.hInstance, NULL);
+    
+	init();
+
+   ShowWindow(g_hWnd, SW_SHOW);
+   UpdateWindow(g_hWnd);     
+ 
+   while(1)
+   {
+      if (PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE))
+      {
+         if (!GetMessage(&msg, NULL, 0, 0))
+            break;
+
+         DispatchMessage(&msg);
+      }
+      else
+      {
+         // This is where we advance the animation time and build the bone matrices.
+         g_SingleFbxMesh.advanceTime();
+
+         render();
+      }
+   }
+   return 0;
 }
 
-/**
- * Print an attribute.
- */
-void PrintAttribute(FbxNodeAttribute* pAttribute) {
-    if (!pAttribute) return;
+void init( void )
+{
+   D3DDISPLAYMODE d3ddm;
 
-    FbxString typeName = GetAttributeTypeName(pAttribute->GetAttributeType());
-    FbxString attrName = pAttribute->GetName();
-    PrintTabs();
-    // Note: to retrieve the character array of a FbxString, use its Buffer() method.
-    printf("<attribute type='%s' name='%s'/>\n", typeName.Buffer(), attrName.Buffer());
+   g_pD3D = Direct3DCreate9( D3D_SDK_VERSION );
+   g_pD3D->GetAdapterDisplayMode( D3DADAPTER_DEFAULT, &d3ddm );
+
+   D3DPRESENT_PARAMETERS d3dpp;
+   ZeroMemory( &d3dpp, sizeof(d3dpp) );
+
+	D3DPOOL_DEFAULT;
+
+   d3dpp.Windowed               = TRUE;
+   d3dpp.SwapEffect             = D3DSWAPEFFECT_DISCARD;
+   d3dpp.BackBufferFormat       = d3ddm.Format;
+   d3dpp.EnableAutoDepthStencil = TRUE;
+   d3dpp.AutoDepthStencilFormat = D3DFMT_D16;
+   d3dpp.PresentationInterval   = D3DPRESENT_INTERVAL_IMMEDIATE;
+   d3dpp.Flags = D3DPRESENTFLAG_LOCKABLE_BACKBUFFER;
+	
+   g_pD3D->CreateDevice( D3DADAPTER_DEFAULT, D3DDEVTYPE_HAL, g_hWnd,
+                        D3DCREATE_SOFTWARE_VERTEXPROCESSING,
+                        &d3dpp, &g_pd3dDevice );
+	
+	g_pd3dDevice->SetRenderState( D3DRS_CULLMODE, D3DCULL_NONE );
+
+	// Initialise our Texture and Mesh Classes
+   g_SingleFbxMesh.load(g_pd3dDevice, "scorpid.fbx", "scorp.dds", 50);
 }
 
-/**
- * Print a node, its attributes, and all its children recursively.
- */
-void PrintNode(FbxNode* pNode) {
-    PrintTabs();
-    const char* nodeName = pNode->GetName();
-    FbxDouble3 translation = pNode->LclTranslation.Get();
-    FbxDouble3 rotation = pNode->LclRotation.Get();
-    FbxDouble3 scaling = pNode->LclScaling.Get();
+void shutDown( void )
+{
+   g_SingleFbxMesh.release();
 
-    // Print the contents of the node.
-    printf("<node name='%s' translation='(%f, %f, %f)' rotation='(%f, %f, %f)' scaling='(%f, %f, %f)'>\n",
-        nodeName,
-        translation[0], translation[1], translation[2],
-        rotation[0], rotation[1], rotation[2],
-        scaling[0], scaling[1], scaling[2]
-    );
-    numTabs++;
+    g_pd3dDevice->Release();
+    g_pd3dDevice = NULL;
 
-    // Print the node's attributes.
-    for (int i = 0; i < pNode->GetNodeAttributeCount(); i++)
-        PrintAttribute(pNode->GetNodeAttributeByIndex(i));
-
-    // Recursively print the children.
-    for (int j = 0; j < pNode->GetChildCount(); j++)
-        PrintNode(pNode->GetChild(j));
-
-    numTabs--;
-    PrintTabs();
-    printf("</node>\n");
+    g_pD3D->Release();
+    g_pD3D = NULL;
 }
 
-/**
- * Main function - loads the hard-coded fbx file,
- * and prints its contents in an xml format to stdout.
- */
-int main(int argc, char** argv) {
+void render()
+{
+   D3DXMATRIX worldViewProj;
 
-    // Change the following filename to a suitable filename value.
-    const char* lFilename = "box.fbx";
+	{		
+      D3DXMATRIX matScale;
+		D3DXMATRIX matTrans;
+      D3DXMATRIX matRot;
+      D3DXMATRIX matProj;
 
-    // Initialize the SDK manager. This object handles all our memory management.
-    FbxManager* lSdkManager = FbxManager::Create();
+      D3DXMatrixScaling(&matScale, g_scale, g_scale, g_scale);
+      D3DXMatrixTranslation(&matTrans, 0.0f, -5.0f, 20.0f);
+		D3DXMatrixRotationYawPitchRoll( &matRot, D3DXToRadian(g_fSpinX), 
+												 D3DXToRadian(g_fSpinY), 
+												 0.0f );
+		
+		D3DXMatrixPerspectiveFovLH( &matProj, D3DXToRadian( 45.0f ), 
+                                640.0f / 480.0f, 0.1f, 500.0f );
+	    		
+      worldViewProj = matScale * matRot * matTrans * matProj;
+	}
+	
+   g_pd3dDevice->SetRenderState( D3DRS_FILLMODE, g_Wire ? D3DFILL_WIREFRAME : D3DFILL_SOLID);
 
-    // Create the IO settings object.
-    FbxIOSettings* ios = FbxIOSettings::Create(lSdkManager, IOSROOT);
-    lSdkManager->SetIOSettings(ios);
+   g_pd3dDevice->Clear( 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0, 1.0f, 0 );
+   g_pd3dDevice->BeginScene();
 
-    // Create an importer using the SDK manager.
-    FbxImporter* lImporter = FbxImporter::Create(lSdkManager, "");
+   g_SingleFbxMesh.render(worldViewProj);
 
-    // Use the first argument as the filename for the importer.
-    if (!lImporter->Initialize(lFilename, -1, lSdkManager->GetIOSettings())) {
-        printf("Call to FbxImporter::Initialize() failed.\n");
-        printf("Error returned: %s\n\n", lImporter->GetStatus().GetErrorString());
-        exit(-1);
-    }
-
-    // Create a new scene so that it can be populated by the imported file.
-    FbxScene* lScene = FbxScene::Create(lSdkManager, "myScene");
-
-    // Import the contents of the file into the scene.
-    lImporter->Import(lScene);
-
-    // The file is imported; so get rid of the importer.
-    lImporter->Destroy();
-
-    // Print the nodes of the scene and their attributes recursively.
-    // Note that we are not printing the root node because it should
-    // not contain any attributes.
-    FbxNode* lRootNode = lScene->GetRootNode();
-    if (lRootNode) {
-        for (int i = 0; i < lRootNode->GetChildCount(); i++)
-            PrintNode(lRootNode->GetChild(i));
-    }
-    // Destroy the SDK manager and all the other objects it was handling.
-    lSdkManager->Destroy();
-    return 0;
+   g_pd3dDevice->EndScene();
+	g_pd3dDevice->Present( NULL, NULL, NULL, NULL );
 }
