@@ -13,9 +13,6 @@
 #include <d3dx9.h>
 #include <stdio.h> // sprintf(..)
 
-#pragma comment(lib, "d3dx9.lib")
-#pragma comment(lib, "d3d9.lib")
-
 #include "SingleFbxMesh.h"
 #include "fbxSdk.h"
 

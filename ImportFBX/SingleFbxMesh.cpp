@@ -125,8 +125,7 @@ void SingleFbxMesh::advanceTime()
    _buildMatrices(fbxFrameTime);
 }
 
-void SingleFbxMesh::render(
-   const D3DXMATRIX& worldViewProj)
+void SingleFbxMesh::render(const D3DXMATRIX& worldViewProj)
 {
    m_effectPtr->SetMatrix("gWorldViewProj", &worldViewProj);
    m_effectPtr->SetTexture("gBaseTexture", m_texturePtr);
@@ -257,8 +256,7 @@ void SingleFbxMesh::_loadSkinnedMeshVertexDeclaration()
    }
 }
 
-void SingleFbxMesh::_buildMatrices(
-   const fbxsdk::FbxTime& fbxFrameTime)
+void SingleFbxMesh::_buildMatrices(const fbxsdk::FbxTime& fbxFrameTime)
 {
    if (m_boneVector.empty())
    {
@@ -351,9 +349,7 @@ void SingleFbxMesh::_loadModel()
    importerPtr = nullptr;
 }
 
-void SingleFbxMesh::_loadBones(
-   FbxNode* nodePtr,
-   long parentBoneIndex)
+void SingleFbxMesh::_loadBones(FbxNode* nodePtr,long parentBoneIndex)
 {
    FbxNodeAttribute* pNodeAttribute = nodePtr->GetNodeAttribute();
    long childCount = nodePtr->GetChildCount();
@@ -374,9 +370,7 @@ void SingleFbxMesh::_loadBones(
    }
 }
 
-void SingleFbxMesh::_loadBone(
-   FbxNode* nodePtr,
-   long parentBoneIndex)
+void SingleFbxMesh::_loadBone(FbxNode* nodePtr,long parentBoneIndex)
 {
    tBone dummy;
 
@@ -404,8 +398,7 @@ void SingleFbxMesh::_loadBone(
    }
 }
 
-void SingleFbxMesh::_loadMeshes(
-   FbxNode* nodePtr)
+void SingleFbxMesh::_loadMeshes(FbxNode* nodePtr)
 {
    FbxNodeAttribute* pNodeAttribute = nodePtr->GetNodeAttribute();
    long childCount = nodePtr->GetChildCount();
@@ -422,8 +415,7 @@ void SingleFbxMesh::_loadMeshes(
    }
 }
 
-void SingleFbxMesh::_loadMesh(
-   FbxNode* nodePtr)
+void SingleFbxMesh::_loadMesh(FbxNode* nodePtr)
 {
    // Bake material and hook as user data.
    const long materialCount = nodePtr->GetMaterialCount();
@@ -477,9 +469,7 @@ void SingleFbxMesh::_loadMesh(
    }
 }
 
-void SingleFbxMesh::_loadMeshPositionNormalUV(
-   FbxNode* nodePtr,
-   tModelRec& modelRec)
+void SingleFbxMesh::_loadMeshPositionNormalUV(FbxNode* nodePtr,tModelRec& modelRec)
 {
 // Wow, I wish I could say I totally understood or tested this code. It mostly
 // came out of Autodesk's only example where GL displays an .fbx mesh using
@@ -663,8 +653,7 @@ void SingleFbxMesh::_loadMeshPositionNormalUV(
 // This function re-indexes the vertex buffer and makes it smaller.
 // Wasn't that sad?  Almost 3 sads, but I cut it off at two.
 // I'll let you figure out the third sad.
-void SingleFbxMesh::_compressSkinnedVertices(
-   SingleFbxMesh::tModelRec& modelRec)
+void SingleFbxMesh::_compressSkinnedVertices(tModelRec& modelRec)
 {
    tSkinnedVerticeVector newVertices;
    unsigned short foundIndice;
@@ -689,9 +678,7 @@ void SingleFbxMesh::_compressSkinnedVertices(
    modelRec.verticeVector.swap(newVertices);
 }
 
-unsigned short  SingleFbxMesh::_findSkinnedVertice(
-   const  SingleFbxMesh::tSkinnedVerticeVector& skinnedVerticeVector,
-   const  SingleFbxMesh::tSkinnedVertice& skinnedVertice)
+unsigned short  SingleFbxMesh::_findSkinnedVertice(const tSkinnedVerticeVector& skinnedVerticeVector,const tSkinnedVertice& skinnedVertice)
 {
    // I'm doing an old fashion sequential search. I figure it's not
    // too awful with processor memory caches.
@@ -710,9 +697,7 @@ unsigned short  SingleFbxMesh::_findSkinnedVertice(
    return 0xFFFF;
 }
 
-void SingleFbxMesh::_loadMeshBoneWeightsAndIndices(
-   FbxNode* nodePtr,
-   tModelRec& modelRec)
+void SingleFbxMesh::_loadMeshBoneWeightsAndIndices(FbxNode* nodePtr,tModelRec& modelRec)
 {
    FbxMesh* meshPtr = nodePtr->GetMesh();
    D3DXMATRIX geometryTransform;
@@ -783,8 +768,7 @@ void SingleFbxMesh::_loadMeshBoneWeightsAndIndices(
    }
 }
 
-void SingleFbxMesh::_normalizeBoneWeights(
-   tModelRec& modelRec)
+void SingleFbxMesh::_normalizeBoneWeights(tModelRec& modelRec)
 {
    for (auto& vertice : modelRec.verticeVector)
    {
@@ -941,16 +925,14 @@ void SingleFbxMesh::_releaseMeshBuffers()
    m_modelVector.clear();
 }
 
-bool SingleFbxMesh::_isMeshSkinned(
-   FbxMesh* meshPtr)
+bool SingleFbxMesh::_isMeshSkinned(FbxMesh* meshPtr)
 {
    long boneCount = _getBoneCount(meshPtr);
 
    return boneCount > 0;
 }
 
-long SingleFbxMesh::_getBoneCount(
-   FbxMesh* meshPtr)
+long SingleFbxMesh::_getBoneCount(FbxMesh* meshPtr)
 {
    if (meshPtr->GetDeformerCount(FbxDeformer::eSkin) == 0)
    {
@@ -960,9 +942,7 @@ long SingleFbxMesh::_getBoneCount(
    return ((FbxSkin*)(meshPtr->GetDeformer(0, FbxDeformer::eSkin)))->GetClusterCount();
 }
 
-void SingleFbxMesh::_getGeometryTransformMatrix(
-   FbxNode* nodePtr,
-   D3DXMATRIX& geometryOffsetMatrix)
+void SingleFbxMesh::_getGeometryTransformMatrix(FbxNode* nodePtr,D3DXMATRIX& geometryOffsetMatrix)
 {
    // Get the geometry offset to a node. It is never inherited by the children.
    const FbxVector4 lT = nodePtr->GetGeometricTranslation(FbxNode::eSourcePivot);
@@ -974,28 +954,21 @@ void SingleFbxMesh::_getGeometryTransformMatrix(
    _fbxToMatrix(fbxMatrix, geometryOffsetMatrix);
 }
 
-void SingleFbxMesh::_getNodeLocalTransform(
-   FbxNode* nodePtr,
-   D3DXMATRIX& matrix)
+void SingleFbxMesh::_getNodeLocalTransform(FbxNode* nodePtr,D3DXMATRIX& matrix)
 {
    FbxAMatrix fbxMatrix = m_scenePtr->GetAnimationEvaluator()->GetNodeLocalTransform(nodePtr);
 
    _fbxToMatrix(fbxMatrix, matrix);
 }
 
-void SingleFbxMesh::_getNodeLocalTransform(
-   FbxNode* nodePtr,
-   const FbxTime& fbxTime,
-   D3DXMATRIX& matrix)
+void SingleFbxMesh::_getNodeLocalTransform(FbxNode* nodePtr,const FbxTime& fbxTime,D3DXMATRIX& matrix)
 {
    FbxAMatrix fbxMatrix = m_scenePtr->GetAnimationEvaluator()->GetNodeLocalTransform(nodePtr, fbxTime);
 
    _fbxToMatrix(fbxMatrix, matrix);
 }
 
-void SingleFbxMesh::_fbxToMatrix(
-   const FbxAMatrix& fbxMatrix,
-   D3DXMATRIX& matrix)
+void SingleFbxMesh::_fbxToMatrix(const FbxAMatrix& fbxMatrix,D3DXMATRIX& matrix)
 {
    for (unsigned long i = 0; i < 4; ++i)
    {
@@ -1050,9 +1023,7 @@ long SingleFbxMesh::_boneNameToindex(
    return kInvalidBoneIndex;
 }
 
-void SingleFbxMesh::_loadControlPointRemap(
-   FbxMesh* meshPtr,
-   SingleFbxMesh::tControlPointRemap& controlPointRemap)
+void SingleFbxMesh::_loadControlPointRemap(FbxMesh* meshPtr,tControlPointRemap& controlPointRemap)
 {
    const long lPolygonCount = meshPtr->GetPolygonCount();
 
@@ -1071,11 +1042,7 @@ void SingleFbxMesh::_loadControlPointRemap(
    }
 }
 
-void SingleFbxMesh::_addBoneInfluence(
-   SingleFbxMesh::tSkinnedVerticeVector& skinnedVerticeVector,
-   long vertexIndex,
-   long boneIndex,
-   double boneWeight)
+void SingleFbxMesh::_addBoneInfluence(tSkinnedVerticeVector& skinnedVerticeVector,long vertexIndex,long boneIndex,double boneWeight)
 {
    unsigned long integerWeight = clamp(static_cast<unsigned long>(boneWeight * 255.0 + 0.5), unsigned long(0), unsigned long(255));
 
@@ -1138,8 +1105,7 @@ void SingleFbxMesh::_calculatePaletteMatrices()
    }
 }
 
-void SingleFbxMesh::_loadNodeLocalTransformMatrices(
-   const FbxTime& fbxTime)
+void SingleFbxMesh::_loadNodeLocalTransformMatrices(const FbxTime& fbxTime)
 {
    for (unsigned long i = 0; i < m_boneVector.size(); ++i)
    {
