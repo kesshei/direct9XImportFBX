@@ -140,43 +140,43 @@ private:
    ID3DXEffect* m_effectPtr;
    IDirect3DVertexDeclaration9* m_skinnedMeshVertexDeclarationPtr;
 
-   //void _loadModelTexture();
-   //void _loadModelEffect();
-   //void _loadSkinnedMeshVertexDeclaration();
+   void _loadModelTexture();
+   void _loadModelEffect();
+   void _loadSkinnedMeshVertexDeclaration();
 
-   //void _buildMatrices(const fbxsdk::FbxTime& time);
+   void _buildMatrices(const fbxsdk::FbxTime& time);
 
    void _loadModel();
-   //void _loadBones(fbxsdk::FbxNode* nodePtr,long parentBoneIndex);
-   //void _loadBone(fbxsdk::FbxNode* nodePtr,long parentBoneIndex);
-   //void _loadMeshes(fbxsdk::FbxNode* nodePtr);
-   //void _loadMesh(fbxsdk::FbxNode* nodePtr);
-   //void _loadMeshPositionNormalUV(fbxsdk::FbxNode* nodePtr, tModelRec& meshRec);
-   //void _compressSkinnedVertices(tModelRec& modelRec);
-   //unsigned short _findSkinnedVertice(const tSkinnedVerticeVector& skinnedVerticeVector,const tSkinnedVertice& skinnedVertice);
-   //void _loadMeshBoneWeightsAndIndices(fbxsdk::FbxNode* nodePtr,tModelRec& modelRec);
-   //void _normalizeBoneWeights(tModelRec& modelRec);
-   //void _loadTextureNames();
+   void _loadBones(fbxsdk::FbxNode* nodePtr,long parentBoneIndex);
+   void _loadBone(fbxsdk::FbxNode* nodePtr,long parentBoneIndex);
+   void _loadMeshes(fbxsdk::FbxNode* nodePtr);
+   void _loadMesh(fbxsdk::FbxNode* nodePtr);
+   void _loadMeshPositionNormalUV(fbxsdk::FbxNode* nodePtr, tModelRec& meshRec);
+   void _compressSkinnedVertices(tModelRec& modelRec);
+   unsigned short _findSkinnedVertice(const tSkinnedVerticeVector& skinnedVerticeVector,const tSkinnedVertice& skinnedVertice);
+   void _loadMeshBoneWeightsAndIndices(fbxsdk::FbxNode* nodePtr,tModelRec& modelRec);
+   void _normalizeBoneWeights(tModelRec& modelRec);
+   void _loadTextureNames();
 
-   //void _releaseFile();
+   void _releaseFile();
 
-   //void _loadMeshBuffers();
-   //void _releaseMeshBuffers();
+   void _loadMeshBuffers();
+   void _releaseMeshBuffers();
 
-   //bool _isMeshSkinned(fbxsdk::FbxMesh* meshPtr);
-   //long _getBoneCount(fbxsdk::FbxMesh* meshPtr);
-   //void _getGeometryTransformMatrix(fbxsdk::FbxNode* nodePtr,D3DXMATRIX& geometryOffsetMatrix);
-   //void _getNodeLocalTransform(fbxsdk::FbxNode* nodePtr,D3DXMATRIX& matrix);
-   //void _getNodeLocalTransform(fbxsdk::FbxNode* nodePtr,const fbxsdk::FbxTime& fbxTime,D3DXMATRIX& matrix);
-   //void _fbxToMatrix(const fbxsdk::FbxAMatrix& fbxMatrix,D3DXMATRIX& matrix);
-   //void _calculateCombinedTransforms();
-   //long _boneNameToindex(const std::string& name);
-   //void _loadControlPointRemap(fbxsdk::FbxMesh* meshPtr,tControlPointRemap& controlPointRemap);
-   //void _addBoneInfluence(tSkinnedVerticeVector& skinnedVerticeVector,long vertexIndex,long boneIndex,double boneWeight);
+   bool _isMeshSkinned(fbxsdk::FbxMesh* meshPtr);
+   long _getBoneCount(fbxsdk::FbxMesh* meshPtr);
+   void _getGeometryTransformMatrix(fbxsdk::FbxNode* nodePtr,D3DXMATRIX& geometryOffsetMatrix);
+   void _getNodeLocalTransform(fbxsdk::FbxNode* nodePtr,D3DXMATRIX& matrix);
+   void _getNodeLocalTransform(fbxsdk::FbxNode* nodePtr,const fbxsdk::FbxTime& fbxTime,D3DXMATRIX& matrix);
+   void _fbxToMatrix(const fbxsdk::FbxAMatrix& fbxMatrix,D3DXMATRIX& matrix);
+   void _calculateCombinedTransforms();
+   long _boneNameToindex(const std::string& name);
+   void _loadControlPointRemap(fbxsdk::FbxMesh* meshPtr,tControlPointRemap& controlPointRemap);
+   void _addBoneInfluence(tSkinnedVerticeVector& skinnedVerticeVector,long vertexIndex,long boneIndex,double boneWeight);
 
-   //void _calculatePaletteMatrices();
-   //void _loadNodeLocalTransformMatrices(const fbxsdk::FbxTime& fbxTime);
-   //void _loadBoneMatriceVector();
+   void _calculatePaletteMatrices();
+   void _loadNodeLocalTransformMatrices(const fbxsdk::FbxTime& fbxTime);
+   void _loadBoneMatriceVector();
 
-   //unsigned long long _getAnimationDuration();
+   unsigned long long _getAnimationDuration();
 };
