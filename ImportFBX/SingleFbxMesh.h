@@ -15,6 +15,100 @@
 #include <vector>
 #include <string>
 
+// All the necessary pieces to keep an .fbx model loaded
+
+enum
+{
+    kInvalidBoneIndex = -1,
+    kTriangleVertexCount = 3,
+    kBoneInfluencesPerVertice = 4,
+};
+
+// This is a stupidly simple way to slice and dice bytes
+// and words. This is great for grabbing color channels
+// and bone influences.
+typedef union
+{
+    unsigned char bytes[4];
+    unsigned long number;
+} tPackedInt;
+
+// Skinned mesh definition, we are being lazy and converting
+// everything to a skinned mesh. If we were doing this properly,
+// we would recognized that a mesh has a single bone influence
+// and render it as a static mesh and use the bone position as
+// the world matrice transform.
+typedef struct
+{
+    D3DXVECTOR3 point;
+    unsigned long boneWeights;
+    unsigned long boneIndices;
+    D3DXVECTOR3 normal;
+    float u;
+    float v;
+} tSkinnedVertice;
+typedef std::vector<tSkinnedVertice> tSkinnedVerticeVector;
+typedef tSkinnedVerticeVector::iterator tSkinnedVerticeIterator;
+typedef tSkinnedVerticeVector::const_iterator tSkinnedVerticeConstIterator;
+
+typedef std::vector<unsigned short> tVertexIndexVector;
+typedef tVertexIndexVector::iterator tVertexIndexIterator;
+typedef tVertexIndexVector::const_iterator tVertexIndexConstIterator;
+
+typedef struct
+{
+    std::string materialName;
+    std::string meshName;
+    tSkinnedVerticeVector verticeVector;
+    tVertexIndexVector indexVector;
+    IDirect3DIndexBuffer9* indexBufferPtr;
+    IDirect3DVertexBuffer9* vertexBufferPtr;
+} tModelRec;
+typedef std::vector<tModelRec> tModelVector;
+typedef tModelVector::iterator tModelIterator;
+typedef tModelVector::const_iterator tModelConstIterator;
+
+typedef struct
+{
+    std::string name;
+
+    // calculates the locals together depth first
+    // equals localTransform * parentMatrix
+    D3DXMATRIX combinedTransform;
+
+    // updated for animation
+    D3DXMATRIX nodeLocalTransform;
+
+    // This is an inverse of the parent to child matrix,
+    // or you can call it the inverse bind pose matrix.
+    // It's set at mesh load time and doesn't change.
+    D3DXMATRIX offset;
+
+    // Ready for a skinned mesh shader as the bone matrice.
+    // equals offset * combinedTransform
+    D3DXMATRIX boneMatrice;
+    fbxsdk::FbxNode* boneNodePtr;
+    fbxsdk::FbxSkeleton* fbxSkeletonPtr;
+    fbxsdk::FbxCluster* fbxClusterPtr;
+
+    // Relationship Stuff:
+    std::vector<int> childIndexes;
+    int parentIndex;
+} tBone;
+
+// Used to do a reverse lookup.
+typedef std::vector<int> tControlPointIndexes;
+typedef std::vector<tControlPointIndexes> tControlPointRemap;
+
+typedef std::vector<tBone> tBoneVector;
+typedef tBoneVector::iterator tBoneIterator;
+typedef tBoneVector::const_iterator tBoneConstIterator;
+
+typedef std::vector<D3DXMATRIX> tMatrixVector;
+typedef tMatrixVector::iterator tMatrixIterator;
+typedef tMatrixVector::const_iterator tMatrixConstIterator;
+
+
 class SingleFbxMesh
 {
 public:
@@ -36,99 +130,6 @@ private:
    FbxManager* m_sdkManagerPtr;
    LPDIRECT3DDEVICE9 m_devicePtr;
 
-// All the necessary pieces to keep an .fbx model loaded
-
-   enum
-   {
-      kInvalidBoneIndex = -1,
-      kTriangleVertexCount = 3,
-      kBoneInfluencesPerVertice = 4,
-   };
-
-// This is a stupidly simple way to slice and dice bytes
-// and words. This is great for grabbing color channels
-// and bone influences.
-   typedef union
-   {
-      unsigned char bytes[4];
-      unsigned long number;
-   } tPackedInt;
-
-// Skinned mesh definition, we are being lazy and converting
-// everything to a skinned mesh. If we were doing this properly,
-// we would recognized that a mesh has a single bone influence
-// and render it as a static mesh and use the bone position as
-// the world matrice transform.
-   typedef struct
-   {
-      D3DXVECTOR3 point;
-      unsigned long boneWeights;
-      unsigned long boneIndices;
-      D3DXVECTOR3 normal;
-      float u;
-      float v;
-   } tSkinnedVertice;
-   typedef std::vector<tSkinnedVertice> tSkinnedVerticeVector;
-   typedef tSkinnedVerticeVector::iterator tSkinnedVerticeIterator;
-   typedef tSkinnedVerticeVector::const_iterator tSkinnedVerticeConstIterator;
-
-   typedef std::vector<unsigned short> tVertexIndexVector;
-   typedef tVertexIndexVector::iterator tVertexIndexIterator;
-   typedef tVertexIndexVector::const_iterator tVertexIndexConstIterator;
-
-   typedef struct
-   {
-      std::string materialName;
-      std::string meshName;
-      tSkinnedVerticeVector verticeVector;
-      tVertexIndexVector indexVector;
-      IDirect3DIndexBuffer9* indexBufferPtr;
-      IDirect3DVertexBuffer9* vertexBufferPtr;
-   } tModelRec;
-   typedef std::vector<tModelRec> tModelVector;
-   typedef tModelVector::iterator tModelIterator;
-   typedef tModelVector::const_iterator tModelConstIterator;
-
-   typedef struct
-   {
-      std::string name;
-
-      // calculates the locals together depth first
-      // equals localTransform * parentMatrix
-      D3DXMATRIX combinedTransform;
-
-      // updated for animation
-      D3DXMATRIX nodeLocalTransform;
-
-      // This is an inverse of the parent to child matrix,
-      // or you can call it the inverse bind pose matrix.
-      // It's set at mesh load time and doesn't change.
-      D3DXMATRIX offset;
-
-      // Ready for a skinned mesh shader as the bone matrice.
-      // equals offset * combinedTransform
-      D3DXMATRIX boneMatrice;
-      fbxsdk::FbxNode* boneNodePtr;
-      fbxsdk::FbxSkeleton* fbxSkeletonPtr;
-      fbxsdk::FbxCluster* fbxClusterPtr;
-
-      // Relationship Stuff:
-      std::vector<int> childIndexes;
-      int parentIndex;
-   } tBone;
-
-   // Used to do a reverse lookup.
-   typedef std::vector<int> tControlPointIndexes;
-   typedef std::vector<tControlPointIndexes> tControlPointRemap;
-
-   typedef std::vector<tBone> tBoneVector;
-   typedef tBoneVector::iterator tBoneIterator;
-   typedef tBoneVector::const_iterator tBoneConstIterator;
-
-   typedef std::vector<D3DXMATRIX> tMatrixVector;
-   typedef tMatrixVector::iterator tMatrixIterator;
-   typedef tMatrixVector::const_iterator tMatrixConstIterator;
-
    std::string m_filename;
    fbxsdk::FbxScene* m_scenePtr;
    int m_majorFileVersion;
@@ -149,33 +150,18 @@ private:
    void _loadModelEffect();
    void _loadSkinnedMeshVertexDeclaration();
 
-   void _buildMatrices(
-      const fbxsdk::FbxTime& time);
+   void _buildMatrices(const fbxsdk::FbxTime& time);
 
    void _loadModel();
-   void _loadBones(
-      fbxsdk::FbxNode* nodePtr,
-      long parentBoneIndex);
-   void _loadBone(
-      fbxsdk::FbxNode* nodePtr,
-      long parentBoneIndex);
-   void _loadMeshes(
-      fbxsdk::FbxNode* nodePtr);
-   void _loadMesh(
-      fbxsdk::FbxNode* nodePtr);
-   void _loadMeshPositionNormalUV(
-      fbxsdk::FbxNode* nodePtr,
-      tModelRec& meshRec);
-   void _compressSkinnedVertices(
-      tModelRec& modelRec);
-   unsigned short _findSkinnedVertice(
-      const tSkinnedVerticeVector& skinnedVerticeVector,
-      const tSkinnedVertice& skinnedVertice);
-   void _loadMeshBoneWeightsAndIndices(
-      fbxsdk::FbxNode* nodePtr,
-      tModelRec& modelRec);
-   void _normalizeBoneWeights(
-      tModelRec& modelRec);
+   void _loadBones(fbxsdk::FbxNode* nodePtr,long parentBoneIndex);
+   void _loadBone(fbxsdk::FbxNode* nodePtr,long parentBoneIndex);
+   void _loadMeshes(fbxsdk::FbxNode* nodePtr);
+   void _loadMesh(fbxsdk::FbxNode* nodePtr);
+   void _loadMeshPositionNormalUV(fbxsdk::FbxNode* nodePtr,tModelRec& meshRec);
+   void _compressSkinnedVertices(tModelRec& modelRec);
+   unsigned short _findSkinnedVertice(const tSkinnedVerticeVector& skinnedVerticeVector,const tSkinnedVertice& skinnedVertice);
+   void _loadMeshBoneWeightsAndIndices(fbxsdk::FbxNode* nodePtr,tModelRec& modelRec);
+   void _normalizeBoneWeights(tModelRec& modelRec);
    void _loadTextureNames();
 
    void _releaseFile();
@@ -183,38 +169,19 @@ private:
    void _loadMeshBuffers();
    void _releaseMeshBuffers();
 
-   bool _isMeshSkinned(
-      fbxsdk::FbxMesh* meshPtr);
-   long _getBoneCount(
-      fbxsdk::FbxMesh* meshPtr);
-   void _getGeometryTransformMatrix(
-      fbxsdk::FbxNode* nodePtr,
-      D3DXMATRIX& geometryOffsetMatrix);
-   void _getNodeLocalTransform(
-      fbxsdk::FbxNode* nodePtr,
-      D3DXMATRIX& matrix);
-   void _getNodeLocalTransform(
-      fbxsdk::FbxNode* nodePtr,
-      const fbxsdk::FbxTime& fbxTime,
-      D3DXMATRIX& matrix);
-   void _fbxToMatrix(
-      const fbxsdk::FbxAMatrix& fbxMatrix,
-      D3DXMATRIX& matrix);
+   bool _isMeshSkinned(fbxsdk::FbxMesh* meshPtr);
+   long _getBoneCount(fbxsdk::FbxMesh* meshPtr);
+   void _getGeometryTransformMatrix(fbxsdk::FbxNode* nodePtr,D3DXMATRIX& geometryOffsetMatrix);
+   void _getNodeLocalTransform(fbxsdk::FbxNode* nodePtr,D3DXMATRIX& matrix);
+   void _getNodeLocalTransform(fbxsdk::FbxNode* nodePtr,const fbxsdk::FbxTime& fbxTime,D3DXMATRIX& matrix);
+   void _fbxToMatrix(const fbxsdk::FbxAMatrix& fbxMatrix,D3DXMATRIX& matrix);
    void _calculateCombinedTransforms();
-   long _boneNameToindex(
-      const std::string& name);
-   void _loadControlPointRemap(
-      fbxsdk::FbxMesh* meshPtr,
-      tControlPointRemap& controlPointRemap);
-   void _addBoneInfluence(
-      tSkinnedVerticeVector& skinnedVerticeVector,
-      long vertexIndex,
-      long boneIndex,
-      double boneWeight);
+   long _boneNameToindex(const std::string& name);
+   void _loadControlPointRemap(fbxsdk::FbxMesh* meshPtr,tControlPointRemap& controlPointRemap);
+   void _addBoneInfluence(tSkinnedVerticeVector& skinnedVerticeVector,long vertexIndex,long boneIndex,double boneWeight);
 
    void _calculatePaletteMatrices();
-   void _loadNodeLocalTransformMatrices(
-      const fbxsdk::FbxTime& fbxTime);
+   void _loadNodeLocalTransformMatrices(const fbxsdk::FbxTime& fbxTime);
    void _loadBoneMatriceVector();
 
    unsigned long long _getAnimationDuration();
