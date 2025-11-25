@@ -354,12 +354,9 @@ void SingleFbxMesh::_loadBones( FbxNode* nodePtr,long parentBoneIndex)
    FbxNodeAttribute* pNodeAttribute = nodePtr->GetNodeAttribute();
    long childCount = nodePtr->GetChildCount();
 
-   if ((nullptr != pNodeAttribute)
-      && (pNodeAttribute->GetAttributeType() == FbxNodeAttribute::eSkeleton))
+   if ((nullptr != pNodeAttribute)&& (pNodeAttribute->GetAttributeType() == FbxNodeAttribute::eSkeleton))
    {
-      _loadBone(
-         nodePtr,
-         parentBoneIndex);
+      _loadBone(nodePtr,parentBoneIndex);
 
       parentBoneIndex = static_cast<long>(m_boneVector.size()) - 1;
    }
@@ -403,8 +400,7 @@ void SingleFbxMesh::_loadMeshes(FbxNode* nodePtr)
    FbxNodeAttribute* pNodeAttribute = nodePtr->GetNodeAttribute();
    long childCount = nodePtr->GetChildCount();
 
-   if ((nullptr != pNodeAttribute)
-      && (pNodeAttribute->GetAttributeType() == FbxNodeAttribute::eMesh))
+   if ((nullptr != pNodeAttribute) && (pNodeAttribute->GetAttributeType() == FbxNodeAttribute::eMesh))
    {
       _loadMesh(nodePtr);
    }
@@ -1069,8 +1065,7 @@ void SingleFbxMesh::_addBoneInfluence(tSkinnedVerticeVector& skinnedVerticeVecto
          smallestWeight = 0;
          // We found an empty slot, but we keep looking in case of a duplicate.
       }
-      else if ((packedWeight < boneWeight)
-         && (packedWeight < smallestWeight))
+      else if ((packedWeight < boneWeight)  && (packedWeight < smallestWeight))
       {
          // This slot is taken, but remember it incase we are full, and it's smaller
          // than the new weight.
@@ -1104,8 +1099,7 @@ void SingleFbxMesh::_calculatePaletteMatrices()
    }
 }
 
-void SingleFbxMesh::_loadNodeLocalTransformMatrices(
-   const FbxTime& fbxTime)
+void SingleFbxMesh::_loadNodeLocalTransformMatrices(const FbxTime& fbxTime)
 {
    for (unsigned long i = 0; i < m_boneVector.size(); ++i)
    {
@@ -1122,10 +1116,7 @@ void SingleFbxMesh::_loadBoneMatriceVector()
       m_boneMatrixVector.push_back(bone.boneMatrice);
    }
 
-   m_effectPtr->SetMatrixArray(
-      "gBoneMatrices",
-      (D3DXMATRIX const*)m_boneMatrixVector.data(),
-      (UINT)m_boneMatrixVector.size());
+   m_effectPtr->SetMatrixArray("gBoneMatrices",(D3DXMATRIX const*)m_boneMatrixVector.data(),(UINT)m_boneMatrixVector.size());
 }
 
 unsigned long long SingleFbxMesh::_getAnimationDuration()
@@ -1145,6 +1136,5 @@ unsigned long long SingleFbxMesh::_getAnimationDuration()
    
    assert(nullptr != currentTakeInfoPtr);
 
-   return currentTakeInfoPtr->mLocalTimeSpan.GetStop().GetMilliSeconds()
-      - currentTakeInfoPtr->mLocalTimeSpan.GetStart().GetMilliSeconds();
+   return currentTakeInfoPtr->mLocalTimeSpan.GetStop().GetMilliSeconds() - currentTakeInfoPtr->mLocalTimeSpan.GetStart().GetMilliSeconds();
 }
