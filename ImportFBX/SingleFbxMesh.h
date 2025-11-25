@@ -115,15 +115,10 @@ public:
    SingleFbxMesh();
    ~SingleFbxMesh();
    void Init();
-   void load(
-      LPDIRECT3DDEVICE9 devicePtr,
-      const char* meshName,
-      const char* textureName,
-      unsigned long boneMatrixVectorSize = 50);
+   void load(LPDIRECT3DDEVICE9 devicePtr,const char* meshName,const char* textureName,unsigned long boneMatrixVectorSize = 50);
    void release();
    void advanceTime();
-   void render(
-      const D3DXMATRIX& worldViewProj);
+   void render(const D3DXMATRIX& worldViewProj);
 
 private:
 // All the necessary pices to keep the Autodesk SDK loaded
