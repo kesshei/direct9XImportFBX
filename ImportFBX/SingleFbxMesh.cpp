@@ -44,7 +44,25 @@ SingleFbxMesh::SingleFbxMesh()
    , m_effectPtr(nullptr)
    , m_skinnedMeshVertexDeclarationPtr(nullptr)
 {
-//The first thing to do is to create the FBX Manager which is the object allocator for almost all the classes in the SDK
+
+}
+
+
+SingleFbxMesh::~SingleFbxMesh()
+{
+// Unloads the model.
+   _releaseFile();
+
+   if (nullptr != m_sdkManagerPtr)
+   {
+// Destroys all objects assocated with the manager.
+      m_sdkManagerPtr->Destroy();
+      m_sdkManagerPtr = nullptr;
+   }
+}
+void SingleFbxMesh::Init()
+{
+    //The first thing to do is to create the FBX Manager which is the object allocator for almost all the classes in the SDK
    m_sdkManagerPtr = FbxManager::Create();
    assert(nullptr != m_sdkManagerPtr);
 
@@ -64,20 +82,6 @@ SingleFbxMesh::SingleFbxMesh()
    m_sdkManagerPtr->GetIOSettings()->SetBoolProp(IMP_FBX_ANIMATION, true);
    m_sdkManagerPtr->GetIOSettings()->SetBoolProp(IMP_FBX_GLOBAL_SETTINGS, true);
 }
-
-SingleFbxMesh::~SingleFbxMesh()
-{
-// Unloads the model.
-   _releaseFile();
-
-   if (nullptr != m_sdkManagerPtr)
-   {
-// Destroys all objects assocated with the manager.
-      m_sdkManagerPtr->Destroy();
-      m_sdkManagerPtr = nullptr;
-   }
-}
-
 void SingleFbxMesh::load(
    LPDIRECT3DDEVICE9 devicePtr,
    const char* meshName,

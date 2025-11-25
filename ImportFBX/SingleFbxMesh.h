@@ -20,7 +20,7 @@ class SingleFbxMesh
 public:
    SingleFbxMesh();
    ~SingleFbxMesh();
-
+   void Init();
    void load(
       LPDIRECT3DDEVICE9 devicePtr,
       const char* meshName,
@@ -33,7 +33,7 @@ public:
 
 private:
 // All the necessary pices to keep the Autodesk SDK loaded
-   fbxsdk::FbxManager* m_sdkManagerPtr;
+   FbxManager* m_sdkManagerPtr;
    LPDIRECT3DDEVICE9 m_devicePtr;
 
 // All the necessary pieces to keep an .fbx model loaded
